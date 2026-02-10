@@ -90,7 +90,7 @@ app.post('/api/user/score', async (req, res) => {
 });
 
 // Fallback for SPA routing: serve index.html for any unknown route
-app.get('*', (req, res) => {
+app.get(/.*/, (req, res) => {
     res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
