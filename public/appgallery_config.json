@@ -1,0 +1,7 @@
+{
+    "appId": "REPLACE_WITH_REAL_APP_ID",
+    "appVersion": "1.0.0",
+    "name": "Balloon Popper",
+    "description": "Pop balloons and feel the vibes!",
+    "icon": "icon.png"
+}
