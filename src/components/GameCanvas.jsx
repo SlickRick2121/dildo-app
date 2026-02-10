@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useImperativeHandle, forwardRef } from 'react';
-import { Lovense } from '../services/lan';
+import { Lovense } from '../services/lan.js';
 
 const PASTEL_COLORS = [
     'hsl(340, 100%, 85%)', // Pink
