@@ -128,8 +128,8 @@ app.post('/api/user/score', async (req, res) => {
     }
 });
 
-// --- Fallback for SPA (Express 5 compatible) ---
-app.get('/:path*', (req, res) => {
+// --- Fallback for SPA (Regex for Express 5) ---
+app.get(/.*/, (req, res) => {
     res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
