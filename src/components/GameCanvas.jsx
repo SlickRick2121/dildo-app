@@ -1,23 +1,11 @@
 import React, { useRef, useEffect, useState, useImperativeHandle, forwardRef } from 'react';
 import { Lovense } from '../services/lan.js';
 
-const PASTEL_COLORS = [
-    'hsl(340, 100%, 85%)', // Pink
-    'hsl(200, 100%, 85%)', // Blue
-    'hsl(60, 100%, 85%)',  // Yellow
-    'hsl(120, 100%, 85%)', // Green
-    'hsl(280, 100%, 85%)', // Purple
-];
-
-const DARK_COLORS = [
-    'hsl(340, 100%, 65%)',
-    'hsl(200, 100%, 65%)',
-    'hsl(60, 100%, 65%)',
-    'hsl(120, 100%, 65%)',
-    'hsl(280, 100%, 65%)',
-];
-
 const GameCanvas = forwardRef(({ theme, hostEvent, onStatsUpdate, onLovenseCmd }, ref) => {
+    // Colors derived from Tailwind theme or defaults
+    const palette = theme === 'dark'
+        ? ['#ff66a3', '#33adff', '#ffeb33', '#4dff4d', '#cc66ff'] // Dark Mode Vibrant
+        : ['#ffb3d1', '#b3e0ff', '#fff4b3', '#b3ffb3', '#e0b3ff']; // Light Mode Pastel
     const canvasRef = useRef(null);
     const [score, setScore] = useState(0);
     const [combo, setCombo] = useState(0);
@@ -211,7 +199,6 @@ const GameCanvas = forwardRef(({ theme, hostEvent, onStatsUpdate, onLovenseCmd }
         state.spawnTimer += dt;
         const spawnRate = Math.max(500, 2000 - state.score);
         if (state.spawnTimer > spawnRate) {
-            const palette = theme === 'dark' ? DARK_COLORS : PASTEL_COLORS;
             state.balloons.push({
                 x: Math.random() * (state.width - 60) + 30,
                 y: state.height + 50,
@@ -321,7 +308,14 @@ const GameCanvas = forwardRef(({ theme, hostEvent, onStatsUpdate, onLovenseCmd }
             <canvas ref={canvasRef} className="block w-full h-full" />
 
             {/* UI Overlay - Safe Area Aware */}
-            <div className="absolute top-0 left-0 w-full p-6 pointer-events-none flex justify-between items-start pt-[env(safe-area-inset-top)] px-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)]">
+            <div
+                className="absolute top-0 left-0 w-full p-6 pointer-events-none flex justify-between items-start"
+                style={{
+                    paddingTop: 'calc(1.5rem + env(safe-area-inset-top))',
+                    paddingLeft: 'calc(1.5rem + env(safe-area-inset-left))',
+                    paddingRight: 'calc(1.5rem + env(safe-area-inset-right))'
+                }}
+            >
                 <div className="flex flex-col gap-1">
                     <span className={`text-4xl font-bold bg-clip-text text-transparent drop-shadow-sm ${theme === 'dark'
                         ? 'bg-gradient-to-r from-purple-300 to-pink-400'
@@ -332,6 +326,14 @@ const GameCanvas = forwardRef(({ theme, hostEvent, onStatsUpdate, onLovenseCmd }
                     <span className={`text-sm font-medium tracking-wider ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>
                         SCORE
                     </span>
+
+                    {/* Toy Connection Status Indicator */}
+                    <div className="flex items-center gap-2 mt-4">
+                        <div className={`w-2 h-2 rounded-full ${Lovense.isReady() ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-gray-500'}`} />
+                        <span className={`text-[10px] font-bold tracking-widest uppercase ${theme === 'dark' ? 'text-gray-600' : 'text-gray-400'}`}>
+                            {Lovense.isReady() ? 'TOY API READY' : 'TOY API OFFLINE'}
+                        </span>
+                    </div>
                 </div>
 
                 <div className="flex flex-col items-end gap-1">

@@ -1,9 +1,6 @@
 @import "tailwindcss";
 
 @theme {
-  --color-pastel-pink: #ffd1dc;
-  --color-pastel-blue: #aecbfa;
-
   --animate-bounce-short: bounce 0.5s infinite;
   --animate-pulse-fast: pulse 0.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }

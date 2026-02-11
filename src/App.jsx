@@ -13,7 +13,7 @@ function App() {
   const [hostEvent, setHostEvent] = useState(null);
 
   // User Sync
-  const { user, updateScore } = useLovenseUser();
+  const { user } = useLovenseUser();
 
   // Game State
   const [score, setScore] = useState(0);
@@ -37,6 +37,12 @@ function App() {
     if (gameRef.current) {
       gameRef.current.resetGame();
     }
+  };
+
+  // Switch from Controller back to Game Mode
+  const switchToGameMode = () => {
+    Network.close();
+    handleStartHosting();
   };
 
   // --- Network Logic ---
@@ -67,7 +73,6 @@ function App() {
         }
         // Handle Remote Commands (Vibration on Phone)
         if (data.type === 'lovense_cmd') {
-          console.log("[Remote] Msg:", data.func, data.args);
           if (Lovense[data.func]) {
             Lovense[data.func](...data.args);
           }
@@ -78,19 +83,18 @@ function App() {
     } catch (err) {
       alert("Failed to join game (" + id + "): " + err);
       setNetworkStatus(p => ({ ...p, loading: false }));
+      // Fallback to hosting if join fails
+      handleStartHosting();
     }
   };
 
   const handleLovenseCmd = (func, ...args) => {
-    // GameCanvas handles Local Trigger.
-    // We handle Remote Broadcast.
     if (networkStatus.hosting && networkStatus.connected) {
       Network.send({ type: 'lovense_cmd', func, args });
     }
   };
 
   const handleHostAction = (type) => {
-    // If Controller (Remote), send to Host
     if (networkStatus.connected && !networkStatus.hosting) {
       let payload = {};
       if (type === 'notification') {
@@ -101,9 +105,7 @@ function App() {
         payload = { type };
       }
       Network.send(payload);
-    }
-    // If Host (Game), Local Action
-    else {
+    } else {
       if (type === 'notification') {
         const msgs = ["Great Job!", "Combo Time!", "Keep it up!", "Bonus Round!"];
         const msg = msgs[Math.floor(Math.random() * msgs.length)];
@@ -114,16 +116,14 @@ function App() {
     }
   };
 
-  // --- Auto-Connect Logic on Mount ---
+  // --- Auto-Start on Mount ---
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const joinId = params.get('join');
 
     if (joinId) {
-      // Join Mode
       handleJoinGame(joinId);
     } else {
-      // Host Mode (Auto-Start)
       handleStartHosting();
     }
 
@@ -132,7 +132,7 @@ function App() {
     };
   }, []);
 
-  // Update URL when Hosting
+  // Update URL without reloading
   useEffect(() => {
     if (gameId && networkStatus.hosting) {
       const url = new URL(window.location);
@@ -148,26 +148,20 @@ function App() {
     }
   }, [score, combo, networkStatus.hosting, networkStatus.connected]);
 
-  // View Mode: Connect + Not Hosting = Controller View
-  const isHostView = networkStatus.connected && !networkStatus.hosting;
+  const isControllerActive = networkStatus.connected && !networkStatus.hosting;
 
   return (
     <div className={`relative w-full h-screen overflow-hidden ${theme === 'dark' ? 'bg-black' : 'bg-white'}`}>
 
-      {/* Brightness Overlay */}
-      <div
-        className="absolute inset-0 z-40 pointer-events-none bg-black transition-opacity duration-300"
-        style={{ opacity: (100 - brightness) / 100 }}
-      />
-
       {/* Main View Switch */}
-      {isHostView ? (
+      {isControllerActive ? (
         <HostControlPanel
           theme={theme}
           score={score}
           combo={combo}
           onAction={handleHostAction}
           status={networkStatus}
+          onSwitchMode={switchToGameMode}
         />
       ) : (
         <GameCanvas
@@ -182,22 +176,24 @@ function App() {
         />
       )}
 
-      {/* Menu Button (Always Visible) */}
-      <button
-        onClick={() => setIsSettingsOpen(true)}
-        className={`absolute top-6 right-6 z-50 p-3 rounded-full shadow-lg transition-transform hover:scale-105 active:scale-95 ${theme === 'dark'
-          ? 'bg-gray-800 text-white border border-gray-700'
-          : 'bg-white text-gray-800 border border-gray-200'
-          }`}
-        style={{ marginTop: 'env(safe-area-inset-top)' }}
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-      </button>
+      {/* Menu / Settings Button */}
+      {!isControllerActive && (
+        <button
+          onClick={() => setIsSettingsOpen(true)}
+          className={`absolute top-6 right-6 z-50 p-3 rounded-full shadow-lg transition-transform hover:scale-105 active:scale-95 ${theme === 'dark'
+            ? 'bg-gray-800/80 text-white border border-gray-700'
+            : 'bg-white/80 text-gray-800 border border-gray-200'
+            } backdrop-blur-md`}
+          style={{ marginTop: 'env(safe-area-inset-top)' }}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        </button>
+      )}
 
-      {/* Settings Modal */}
+      {/* Settings Modal (Overlay) */}
       <SettingsMenu
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
@@ -208,6 +204,12 @@ function App() {
         onReset={handleReset}
         onHostAction={handleHostAction}
         gameId={gameId}
+      />
+
+      {/* Brightness Overlay (Global) */}
+      <div
+        className="absolute inset-0 z-[60] pointer-events-none bg-black transition-opacity duration-300"
+        style={{ opacity: (100 - brightness) / 100 }}
       />
     </div>
   );
