@@ -174,8 +174,10 @@ function App() {
           ref={gameRef}
           theme={theme}
           hostEvent={hostEvent}
-          onScoreUpdate={setScore}
-          onComboUpdate={setCombo}
+          onStatsUpdate={(s, c) => {
+            setScore(s);
+            setCombo(c);
+          }}
           onLovenseCmd={handleLovenseCmd}
         />
       )}
