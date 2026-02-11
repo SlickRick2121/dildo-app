@@ -128,8 +128,9 @@ app.post('/api/user/score', async (req, res) => {
     }
 });
 
-// --- Fallback ---
-app.get('(.*)', (req, res) => {
+// --- Fallback for SPA ---
+app.get('/*', (req, res) => {
+    console.log(`[Bust] Serving index.html for: ${req.url}`);
     res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
