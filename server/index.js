@@ -129,7 +129,7 @@ app.post('/api/user/score', async (req, res) => {
 });
 
 // --- Fallback ---
-app.get('*', (req, res) => {
+app.get('(.*)', (req, res) => {
     res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
