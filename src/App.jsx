@@ -188,6 +188,7 @@ function App() {
         setBrightness={setBrightness}
         onReset={handleReset}
         onHostAction={handleHostAction}
+        gameId={gameId}
       />
     </div>
   );

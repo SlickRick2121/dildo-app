@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 
 export default function SettingsMenu({
     isOpen,
@@ -8,13 +8,16 @@ export default function SettingsMenu({
     brightness,
     setBrightness,
     onReset,
-    onHostAction
+    onHostAction,
+    gameId
 }) {
     if (!isOpen) return null;
 
+    const joyLink = gameId ? `${window.location.protocol}//${window.location.host}/?join=${gameId}` : '';
+
     return (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in">
-            <div className={`w-[90%] max-w-sm p-6 rounded-2xl shadow-2xl border ${theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-white border-white'}`}>
+            <div className={`w-[90%] max-w-sm p-6 rounded-2xl shadow-2xl border ${theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-white border-white'} max-h-[90vh] overflow-y-auto`}>
 
                 {/* Header */}
                 <div className="flex justify-between items-center mb-6">
@@ -28,6 +31,19 @@ export default function SettingsMenu({
                         ✕
                     </button>
                 </div>
+
+                {/* QR Code Section */}
+                {gameId && (
+                    <div className="mb-8 flex flex-col items-center p-4 bg-white rounded-xl">
+                        <QRCodeSVG value={joyLink} size={160} />
+                        <p className="mt-3 text-sm font-bold text-gray-900 text-center">
+                            Scan to Play on Mobile
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1 break-all max-w-[200px] text-center">
+                            {joyLink}
+                        </p>
+                    </div>
+                )}
 
                 {/* Controls */}
                 <div className="space-y-6">
