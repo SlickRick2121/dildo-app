@@ -25,6 +25,18 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date() });
 });
 
+// Lovense Callback Validation (Standard API)
+app.get('/api/lovense/callback', (req, res) => {
+    console.log('[Lovense] Callback Ping Received:', req.query);
+    // Lovense sometimes sends a 'challenge' or just expects a 200 OK
+    res.status(200).send('OK');
+});
+
+app.post('/api/lovense/callback', (req, res) => {
+    console.log('[Lovense] Webhook Received:', req.body);
+    res.status(200).json({ status: 'received' });
+});
+
 // Sync User (Upsert)
 app.post('/api/user/sync', async (req, res) => {
     try {
