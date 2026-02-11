@@ -4,6 +4,7 @@ import SettingsMenu from './components/SettingsMenu';
 import HostControlPanel from './components/HostControlPanel';
 import { Network } from './services/network';
 import { useLovenseUser } from './hooks/useLovenseUser';
+import { Lovense } from './services/lan';
 
 function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -64,12 +65,27 @@ function App() {
           setScore(data.score);
           setCombo(data.combo);
         }
+        // Handle Remote Commands (Vibration on Phone)
+        if (data.type === 'lovense_cmd') {
+          console.log("[Remote] Msg:", data.func, data.args);
+          if (Lovense[data.func]) {
+            Lovense[data.func](...data.args);
+          }
+        }
       });
       setNetworkStatus({ connected: true, hosting: false, loading: false });
       setGameId(id);
     } catch (err) {
       alert("Failed to join game (" + id + "): " + err);
       setNetworkStatus(p => ({ ...p, loading: false }));
+    }
+  };
+
+  const handleLovenseCmd = (func, ...args) => {
+    // GameCanvas handles Local Trigger.
+    // We handle Remote Broadcast.
+    if (networkStatus.hosting && networkStatus.connected) {
+      Network.send({ type: 'lovense_cmd', func, args });
     }
   };
 
@@ -160,6 +176,7 @@ function App() {
           hostEvent={hostEvent}
           onScoreUpdate={setScore}
           onComboUpdate={setCombo}
+          onLovenseCmd={handleLovenseCmd}
         />
       )}
 

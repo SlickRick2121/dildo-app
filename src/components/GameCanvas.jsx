@@ -17,12 +17,20 @@ const DARK_COLORS = [
     'hsl(280, 100%, 65%)',
 ];
 
-const GameCanvas = forwardRef(({ theme, hostEvent, onStatsUpdate }, ref) => {
+const GameCanvas = forwardRef(({ theme, hostEvent, onStatsUpdate, onLovenseCmd }, ref) => {
     const canvasRef = useRef(null);
     const [score, setScore] = useState(0);
     const [combo, setCombo] = useState(0);
     const [maxCombo, setMaxCombo] = useState(0);
     const [notification, setNotification] = useState(null);
+
+    // Helper to trigger local AND remote vibration
+    const dispatchLovense = (func, ...args) => {
+        // Local (Host)
+        if (Lovense[func]) Lovense[func](...args);
+        // Remote (Controller - via App)
+        if (onLovenseCmd) onLovenseCmd(func, ...args);
+    };
 
     // Game State Refs
     const gameState = useRef({
@@ -67,13 +75,13 @@ const GameCanvas = forwardRef(({ theme, hostEvent, onStatsUpdate }, ref) => {
                 scale: 0.1
             });
             // Haptic feedback for reaction
-            Lovense.pulse(50, 200);
+            dispatchLovense('pulse', 50, 200);
         }
 
         if (hostEvent.type === 'notification') {
             setNotification(hostEvent.message);
-            Lovense.vibrate(20);
-            setTimeout(() => Lovense.vibrate(0), 200);
+            dispatchLovense('vibrate', 20);
+            setTimeout(() => dispatchLovense('vibrate', 0), 200);
 
             // Auto hide notification
             setTimeout(() => setNotification(null), 4000);
@@ -173,12 +181,12 @@ const GameCanvas = forwardRef(({ theme, hostEvent, onStatsUpdate }, ref) => {
 
     const handleHaptics = (currentCombo) => {
         if (currentCombo >= 5) {
-            Lovense.pattern('wave', 500, Math.min(100, 50 + currentCombo * 5));
+            dispatchLovense('pattern', 'wave', 500, Math.min(100, 50 + currentCombo * 5));
         } else if (currentCombo >= 3) {
-            Lovense.vibrate(40);
-            setTimeout(() => Lovense.vibrate(0), 300);
+            dispatchLovense('vibrate', 40);
+            setTimeout(() => dispatchLovense('vibrate', 0), 300);
         } else {
-            Lovense.pulse(30, 150);
+            dispatchLovense('pulse', 30, 150);
         }
     };
 
